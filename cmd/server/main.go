@@ -2,19 +2,36 @@ package main
 
 // go standard library
 import (
+	"database/sql"
 	"log"
 	"net/http"
+	"os"
 	"sync/atomic"
 
+	"github.com/joho/godotenv"
+	"github.com/k4rldoherty/go-http-server/internal/database"
 	"github.com/k4rldoherty/go-http-server/internal/server"
+	_ "github.com/lib/pq"
 )
 
 func main() {
 	const filePathRoot = "."
 	const port = "8080"
 
-	cfg := server.ApiConfig{
+	godotenv.Load("../../.env")
+	dbURL := os.Getenv("DB_URL")
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	dbQueries := database.New(db)
+
+	cfg := server.APIConfig{
 		FileServerHits: atomic.Int32{},
+		DBQueries:      dbQueries,
 	}
 
 	fileServerHandler := http.FileServer((http.Dir(filePathRoot)))

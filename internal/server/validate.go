@@ -23,7 +23,7 @@ type retBody struct {
 	Body string `json:"cleaned_body"`
 }
 
-func (cfg *ApiConfig) ValidateChirpHandler(w http.ResponseWriter, req *http.Request) {
+func (cfg *APIConfig) ValidateChirpHandler(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	rb := reqBody{}
 	err := decoder.Decode(&rb)

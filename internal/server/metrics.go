@@ -6,16 +6,16 @@ import (
 	"net/http"
 )
 
-// increments the number of server hits for all paths /app
-func (cfg *ApiConfig) MiddlewareMetricsInc(next http.Handler) http.Handler {
+// MiddlewareMetricsInc - increments the number of server hits for all paths /app
+func (cfg *APIConfig) MiddlewareMetricsInc(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		cfg.FileServerHits.Add(1)
 		next.ServeHTTP(w, req)
 	})
 }
 
-// endpoint to show the number of hits to all endpoints followign /app
-func (cfg *ApiConfig) MetricsHandler(w http.ResponseWriter, req *http.Request) {
+// MetricsHandler - endpoint to show the number of hits to all endpoints followign /app
+func (cfg *APIConfig) MetricsHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	res := fmt.Sprintf(

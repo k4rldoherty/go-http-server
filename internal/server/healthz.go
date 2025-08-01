@@ -2,7 +2,7 @@ package server
 
 import "net/http"
 
-// returns the server status
+// HealthzHandler - returns the server status
 func HealthzHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
