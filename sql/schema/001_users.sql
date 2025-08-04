@@ -3,7 +3,7 @@ CREATE TABLE users (
     id UUID NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    email VARCHAR(50) NULL UNIQUE
+    email VARCHAR(50) NOT NULL UNIQUE
 );
 
 -- +goose Down
