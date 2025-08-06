@@ -48,8 +48,8 @@ func main() {
 
 	// util endpoints to check health etc
 	serveMux.HandleFunc("GET /api/healthz", server.HealthzHandler)
-	serveMux.HandleFunc("POST /api/validate_chirp", cfg.ValidateChirpHandler)
 	serveMux.HandleFunc("POST /api/users", cfg.CreateUserHandler)
+	serveMux.HandleFunc("POST /api/chirps", cfg.CreateChirpHandler)
 	serveMux.HandleFunc("GET /admin/metrics", cfg.MetricsHandler)
 	serveMux.HandleFunc("POST /admin/reset", cfg.ResetHandler)
 

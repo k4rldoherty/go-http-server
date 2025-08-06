@@ -7,23 +7,28 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+
+	"github.com/google/uuid"
+	"github.com/k4rldoherty/go-http-server/internal/database"
 )
 
 var profaneWords = []string{"kerfuffle", "sharbert", "fornax"}
 
 type reqBody struct {
-	Body string `json:"body"`
+	Body   string `json:"body"`
+	UserID string `json:"user_id"`
+}
+
+type resBody struct {
+	Body   string    `json:"body"`
+	UserID uuid.UUID `json:"user_id"`
 }
 
 type errBody struct {
 	Body string `json:"body"`
 }
 
-type retBody struct {
-	Body string `json:"cleaned_body"`
-}
-
-func (cfg *APIConfig) ValidateChirpHandler(w http.ResponseWriter, req *http.Request) {
+func (cfg *APIConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	rb := reqBody{}
 	err := decoder.Decode(&rb)
@@ -46,10 +51,21 @@ func (cfg *APIConfig) ValidateChirpHandler(w http.ResponseWriter, req *http.Requ
 	}
 
 	cleanedResult := cleanInput(rb.Body)
-	w.WriteHeader(200)
-	respBody := retBody{Body: cleanedResult}
+	// add chirp to database
+	c, err := cfg.DBQueries.CreateChirp(req.Context(), database.CreateChirpParams{
+		Body:   cleanedResult,
+		UserID: cfg.UserID,
+	})
+	if err != nil {
+		log.Printf("failed to create chirp: %v", err)
+		w.WriteHeader(400)
+		return
+	}
+	respBody := resBody{Body: c.Body, UserID: c.UserID}
 	dat, _ := json.Marshal(respBody)
-	w.Write([]byte(dat))
+	w.WriteHeader(201)
+	w.Write(dat)
+	log.Println("chirp created successfully.")
 }
 
 func cleanInput(s string) string {

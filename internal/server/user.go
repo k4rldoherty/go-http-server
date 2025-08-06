@@ -54,5 +54,6 @@ func (cfg *APIConfig) CreateUserHandler(w http.ResponseWriter, req *http.Request
 		log.Printf("error marshalling response: %v", err)
 		return
 	}
+	cfg.UserID = u.ID
 	w.Write(resJSON)
 }
