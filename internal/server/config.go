@@ -4,13 +4,13 @@ package server
 import (
 	"sync/atomic"
 
-	"github.com/google/uuid"
+	"github.com/k4rldoherty/go-http-server/internal/auth"
 	"github.com/k4rldoherty/go-http-server/internal/database"
 )
 
-type APIConfig struct {
+type ServerConfig struct {
 	FileServerHits atomic.Int32
 	DBQueries      *database.Queries
 	Platform       string
-	UserID         uuid.UUID
+	JWTCfg         *auth.JWTConfig
 }

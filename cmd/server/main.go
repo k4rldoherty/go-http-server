@@ -7,8 +7,10 @@ import (
 	"net/http"
 	"os"
 	"sync/atomic"
+	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/k4rldoherty/go-http-server/internal/auth"
 	"github.com/k4rldoherty/go-http-server/internal/database"
 	"github.com/k4rldoherty/go-http-server/internal/server"
 	_ "github.com/lib/pq"
@@ -31,10 +33,18 @@ func main() {
 
 	platform := os.Getenv("PLATFORM")
 
-	cfg := server.APIConfig{
+	jwtCfg := auth.JWTConfig{
+		Issuer:        "chirpy",
+		Duration:      time.Second + 5,
+		SigningString: []byte("test"),
+	}
+
+	// general server config
+	cfg := server.ServerConfig{
 		FileServerHits: atomic.Int32{},
 		DBQueries:      dbQueries,
 		Platform:       platform,
+		JWTCfg:         &jwtCfg,
 	}
 
 	fileServerHandler := http.FileServer((http.Dir(filePathRoot)))

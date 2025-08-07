@@ -23,7 +23,7 @@ type loginResponse struct {
 	Email     string    `json:"email"`
 }
 
-func (cfg *APIConfig) LoginHandler(r http.ResponseWriter, req *http.Request) {
+func (cfg *ServerConfig) LoginHandler(r http.ResponseWriter, req *http.Request) {
 	// parse Request
 	reqBody, err := io.ReadAll(req.Body)
 	if err != nil {

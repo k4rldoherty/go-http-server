@@ -7,7 +7,7 @@ import (
 )
 
 // MiddlewareMetricsInc - increments the number of server hits for all paths /app
-func (cfg *APIConfig) MiddlewareMetricsInc(next http.Handler) http.Handler {
+func (cfg *ServerConfig) MiddlewareMetricsInc(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		cfg.FileServerHits.Add(1)
 		next.ServeHTTP(w, req)
@@ -15,7 +15,7 @@ func (cfg *APIConfig) MiddlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 // MetricsHandler - endpoint to show the number of hits to all endpoints followign /app
-func (cfg *APIConfig) MetricsHandler(w http.ResponseWriter, req *http.Request) {
+func (cfg *ServerConfig) MetricsHandler(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	res := fmt.Sprintf(

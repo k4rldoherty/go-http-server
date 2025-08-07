@@ -16,8 +16,8 @@ import (
 var profaneWords = []string{"kerfuffle", "sharbert", "fornax"}
 
 type reqBody struct {
-	Body   string `json:"body"`
-	UserID string `json:"user_id"`
+	Body   string    `json:"body"`
+	UserID uuid.UUID `json:"user_id"`
 }
 
 type resBody struct {
@@ -30,14 +30,14 @@ type errBody struct {
 }
 
 type chirp struct {
-	Id        uuid.UUID `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Body      string    `json:"body"`
 	UserID    uuid.UUID `json:"user_id"`
 }
 
-func (cfg *APIConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Request) {
+func (cfg *ServerConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	rb := reqBody{}
 	err := decoder.Decode(&rb)
@@ -63,7 +63,7 @@ func (cfg *APIConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Reques
 	// add chirp to database
 	c, err := cfg.DBQueries.CreateChirp(req.Context(), database.CreateChirpParams{
 		Body:   cleanedResult,
-		UserID: cfg.UserID,
+		UserID: rb.UserID,
 	})
 	if err != nil {
 		log.Printf("failed to create chirp: %v", err)
@@ -77,7 +77,7 @@ func (cfg *APIConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Reques
 	log.Printf("chirp created successfully: id = %v", c.ID)
 }
 
-func (cfg *APIConfig) GetAllChirpsHandler(w http.ResponseWriter, req *http.Request) {
+func (cfg *ServerConfig) GetAllChirpsHandler(w http.ResponseWriter, req *http.Request) {
 	c, err := cfg.DBQueries.GetAllChirps(req.Context())
 	if err != nil {
 		w.WriteHeader(400)
@@ -89,7 +89,7 @@ func (cfg *APIConfig) GetAllChirpsHandler(w http.ResponseWriter, req *http.Reque
 	res := []chirp{}
 	for _, v := range c {
 		parsedItem := chirp{
-			Id:        v.ID,
+			ID:        v.ID,
 			CreatedAt: v.CreatedAt,
 			UpdatedAt: v.UpdatedAt,
 			Body:      v.Body,
@@ -106,7 +106,7 @@ func (cfg *APIConfig) GetAllChirpsHandler(w http.ResponseWriter, req *http.Reque
 	w.Write(resJSON)
 }
 
-func (cfg *APIConfig) GetChirpByIDHandler(w http.ResponseWriter, req *http.Request) {
+func (cfg *ServerConfig) GetChirpByIDHandler(w http.ResponseWriter, req *http.Request) {
 	id := req.PathValue("chirpID")
 	if id == "" {
 		log.Println("id passed in was empty")
@@ -126,7 +126,7 @@ func (cfg *APIConfig) GetChirpByIDHandler(w http.ResponseWriter, req *http.Reque
 		return
 	}
 	parsedChirp, err := json.Marshal(chirp{
-		Id:        c.ID,
+		ID:        c.ID,
 		CreatedAt: c.CreatedAt,
 		UpdatedAt: c.UpdatedAt,
 		Body:      c.Body,

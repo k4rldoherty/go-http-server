@@ -25,7 +25,7 @@ type createUserResponse struct {
 }
 
 // CreateUserHandler - Creates a user and adds to database
-func (cfg *APIConfig) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
+func (cfg *ServerConfig) CreateUserHandler(w http.ResponseWriter, req *http.Request) {
 	// parse request json
 	r := createUserRequest{}
 	reqBody, err := io.ReadAll(req.Body)
@@ -66,7 +66,6 @@ func (cfg *APIConfig) CreateUserHandler(w http.ResponseWriter, req *http.Request
 		log.Printf("error marshalling response: %v", err)
 		return
 	}
-	cfg.UserID = u.ID
 	w.Write(resJSON)
 	log.Println("user created successfully")
 }

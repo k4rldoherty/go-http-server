@@ -7,7 +7,7 @@ import (
 )
 
 // ResetHandler - resets the hits number to 0
-func (cfg *APIConfig) ResetHandler(w http.ResponseWriter, req *http.Request) {
+func (cfg *ServerConfig) ResetHandler(w http.ResponseWriter, req *http.Request) {
 	if cfg.Platform != "dev" {
 		w.WriteHeader(403)
 		return
