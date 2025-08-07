@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/k4rldoherty/go-http-server/internal/database"
@@ -20,12 +21,20 @@ type reqBody struct {
 }
 
 type resBody struct {
-	Body   string    `json:"body"`
-	UserID uuid.UUID `json:"user_id"`
+	Body string    `json:"body"`
+	ID   uuid.UUID `json:"id"`
 }
 
 type errBody struct {
 	Body string `json:"body"`
+}
+
+type chirp struct {
+	Id        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
 }
 
 func (cfg *APIConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Request) {
@@ -61,11 +70,76 @@ func (cfg *APIConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Reques
 		w.WriteHeader(400)
 		return
 	}
-	respBody := resBody{Body: c.Body, UserID: c.UserID}
+	respBody := resBody{Body: c.Body, ID: c.ID}
 	dat, _ := json.Marshal(respBody)
 	w.WriteHeader(201)
 	w.Write(dat)
-	log.Println("chirp created successfully.")
+	log.Printf("chirp created successfully: id = %v", c.ID)
+}
+
+func (cfg *APIConfig) GetAllChirpsHandler(w http.ResponseWriter, req *http.Request) {
+	c, err := cfg.DBQueries.GetAllChirps(req.Context())
+	if err != nil {
+		w.WriteHeader(400)
+		log.Printf("error getting chirps from database: %v", err)
+		return
+	}
+	w.WriteHeader(200)
+	w.Header().Add("Content-Type", "application/json")
+	res := []chirp{}
+	for _, v := range c {
+		parsedItem := chirp{
+			Id:        v.ID,
+			CreatedAt: v.CreatedAt,
+			UpdatedAt: v.UpdatedAt,
+			Body:      v.Body,
+			UserID:    v.UserID,
+		}
+		res = append(res, parsedItem)
+	}
+	resJSON, err := json.Marshal(res)
+	if err != nil {
+		w.WriteHeader(400)
+		log.Printf("error marshalling json response: %v", err)
+		return
+	}
+	w.Write(resJSON)
+}
+
+func (cfg *APIConfig) GetChirpByIDHandler(w http.ResponseWriter, req *http.Request) {
+	id := req.PathValue("chirpID")
+	if id == "" {
+		log.Println("id passed in was empty")
+		return
+	}
+	log.Printf("should be a uuid -> %v\n", id)
+	idParsed, err := uuid.Parse(id)
+	if err != nil {
+		w.WriteHeader(400)
+		log.Printf("error parsing id from path: %v", err)
+		return
+	}
+	// try get chirp by id
+	c, err := cfg.DBQueries.GetChirpById(req.Context(), idParsed)
+	if err != nil {
+		w.WriteHeader(404)
+		return
+	}
+	parsedChirp, err := json.Marshal(chirp{
+		Id:        c.ID,
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: c.UpdatedAt,
+		Body:      c.Body,
+		UserID:    c.UserID,
+	})
+	if err != nil {
+		w.WriteHeader(400)
+		log.Printf("error marshalling json chirp: %v", err)
+		return
+	}
+	w.WriteHeader(200)
+	w.Header().Add("Content-Type", "application/json")
+	w.Write(parsedChirp)
 }
 
 func cleanInput(s string) string {

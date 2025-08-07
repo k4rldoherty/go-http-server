@@ -8,10 +8,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/k4rldoherty/go-http-server/internal/auth"
+	"github.com/k4rldoherty/go-http-server/internal/database"
 )
 
 type createUserRequest struct {
-	Email string `json:"email"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type createUserResponse struct {
@@ -34,8 +37,17 @@ func (cfg *APIConfig) CreateUserHandler(w http.ResponseWriter, req *http.Request
 		log.Printf("error unmarshalling request: %v", err)
 		return
 	}
+	// hash password
+	hash, err := auth.HashPassword(r.Password)
+	if err != nil {
+		log.Printf("error hashing password: %v\n", err)
+		return
+	}
 	// add user to database
-	u, err := cfg.DBQueries.CreateUser(req.Context(), r.Email)
+	u, err := cfg.DBQueries.CreateUser(req.Context(), database.CreateUserParams{
+		Email:          r.Email,
+		HashedPassword: hash,
+	})
 	if err != nil {
 		log.Printf("error adding user to database, %v", err)
 		return
@@ -56,4 +68,5 @@ func (cfg *APIConfig) CreateUserHandler(w http.ResponseWriter, req *http.Request
 	}
 	cfg.UserID = u.ID
 	w.Write(resJSON)
+	log.Println("user created successfully")
 }
