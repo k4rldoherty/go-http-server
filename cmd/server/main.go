@@ -33,10 +33,12 @@ func main() {
 
 	platform := os.Getenv("PLATFORM")
 
+	jwtSecret := os.Getenv("JWTSECRET")
+
 	jwtCfg := auth.JWTConfig{
 		Issuer:        "chirpy",
-		Duration:      time.Second + 5,
-		SigningString: []byte("test"),
+		Duration:      time.Hour,
+		SigningString: []byte(jwtSecret),
 	}
 
 	// general server config
