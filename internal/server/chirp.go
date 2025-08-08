@@ -10,19 +10,20 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/k4rldoherty/go-http-server/internal/auth"
 	"github.com/k4rldoherty/go-http-server/internal/database"
 )
 
 var profaneWords = []string{"kerfuffle", "sharbert", "fornax"}
 
 type reqBody struct {
-	Body   string    `json:"body"`
-	UserID uuid.UUID `json:"user_id"`
+	Body string `json:"body"`
 }
 
 type resBody struct {
-	Body string    `json:"body"`
-	ID   uuid.UUID `json:"id"`
+	Body   string    `json:"body"`
+	UserID string    `json:"user_id"`
+	ID     uuid.UUID `json:"id"`
 }
 
 type errBody struct {
@@ -38,9 +39,23 @@ type chirp struct {
 }
 
 func (cfg *ServerConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Request) {
+	// authenticate
+	bearer, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		log.Printf("%v", err)
+		w.WriteHeader(401)
+		return
+	}
+	userID, err := auth.ValidateJWT(bearer, cfg.JWTCfg)
+	if err != nil {
+		log.Printf("%v", err)
+		w.WriteHeader(401)
+		return
+	}
+
 	decoder := json.NewDecoder(req.Body)
 	rb := reqBody{}
-	err := decoder.Decode(&rb)
+	err = decoder.Decode(&rb)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if err != nil {
 		log.Printf("%v", err)
@@ -63,14 +78,14 @@ func (cfg *ServerConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Req
 	// add chirp to database
 	c, err := cfg.DBQueries.CreateChirp(req.Context(), database.CreateChirpParams{
 		Body:   cleanedResult,
-		UserID: rb.UserID,
+		UserID: userID,
 	})
 	if err != nil {
 		log.Printf("failed to create chirp: %v", err)
 		w.WriteHeader(400)
 		return
 	}
-	respBody := resBody{Body: c.Body, ID: c.ID}
+	respBody := resBody{Body: c.Body, UserID: userID.String(), ID: c.ID}
 	dat, _ := json.Marshal(respBody)
 	w.WriteHeader(201)
 	w.Write(dat)

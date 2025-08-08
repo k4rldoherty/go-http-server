@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -62,6 +63,34 @@ func TestValidateJWT(t *testing.T) {
 			}
 			if tt.name == "Invalid token" {
 				testJWTCfg.SigningString = []byte("invalid")
+			}
+		})
+	}
+}
+
+func GetBearerTokenTest(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr bool
+		header  http.Header
+	}{
+		{
+			name:    "valid header",
+			wantErr: false,
+		},
+		{
+			name:    "invalid header",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		// TODO:
+		// Create header data for tests
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := GetBearerToken(tt.header)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetBearerToken error = %v", err)
 			}
 		})
 	}
