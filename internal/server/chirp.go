@@ -120,13 +120,59 @@ func (cfg *ServerConfig) GetAllChirpsHandler(w http.ResponseWriter, req *http.Re
 	w.Write(resJSON)
 }
 
+func (cfg *ServerConfig) DeleteChirpHandler(w http.ResponseWriter, req *http.Request) {
+	id := req.PathValue("chirpID")
+	if id == "" {
+		log.Println("CHIRP - id passed in was empty")
+		w.WriteHeader(401)
+		return
+	}
+	idParsed, err := uuid.Parse(id)
+	if err != nil {
+		w.WriteHeader(401)
+		log.Printf("CHIRP - %v", err)
+		return
+	}
+	token, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		w.WriteHeader(401)
+		log.Printf("CHIRP - %v", err)
+		return
+	}
+	userID, err := auth.ValidateJWT(token, cfg.JWTCfg)
+	if err != nil {
+		w.WriteHeader(403)
+		log.Printf("CHIRP - %v", err)
+		return
+	}
+	chirp, err := cfg.DBQueries.GetChirpById(req.Context(), idParsed)
+	if err != nil {
+		w.WriteHeader(404)
+		log.Printf("CHIRP - %v", err)
+		return
+	}
+	if chirp.UserID != userID {
+		w.WriteHeader(403)
+		return
+	}
+	err = cfg.DBQueries.DeleteChirp(req.Context(), database.DeleteChirpParams{
+		ID:     idParsed,
+		UserID: userID,
+	})
+	if err != nil {
+		w.WriteHeader(403)
+		log.Printf("CHIRP - %v", err)
+		return
+	}
+	w.WriteHeader(204)
+}
+
 func (cfg *ServerConfig) GetChirpByIDHandler(w http.ResponseWriter, req *http.Request) {
 	id := req.PathValue("chirpID")
 	if id == "" {
 		log.Println("CHIRP - id passed in was empty")
 		return
 	}
-	log.Printf("should be a uuid -> %v\n", id)
 	idParsed, err := uuid.Parse(id)
 	if err != nil {
 		w.WriteHeader(400)

@@ -48,7 +48,6 @@ func MakeJWT(userID uuid.UUID, cfg *JWTConfig) (string, error) {
 }
 
 func ValidateJWT(tokenString string, cfg *JWTConfig) (uuid.UUID, error) {
-	// initialize an empty struce to be populated by the data read from the jwt
 	claims := &jwt.RegisteredClaims{}
 	// parse the token
 	parsedToken, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (any, error) {
@@ -88,4 +87,19 @@ func MakeRefreshToken() (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(token), nil
+}
+
+// TODO: the above bearer func can handle both of these functionalities
+
+func GetAPIKey(headers http.Header) (string, error) {
+	authKey := headers.Get("Authorization")
+	if authKey == "" {
+		return "", errors.New("cannot find header")
+	}
+	// API KEY
+	b := strings.Split(authKey, " ")
+	if len(b) != 2 {
+		return "", errors.New("cannot find header ApiKey")
+	}
+	return strings.Trim(b[1], ""), nil
 }

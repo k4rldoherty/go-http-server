@@ -13,4 +13,5 @@ type ServerConfig struct {
 	DBQueries      *database.Queries
 	Platform       string
 	JWTCfg         *auth.JWTConfig
+	PolkaKey       string
 }

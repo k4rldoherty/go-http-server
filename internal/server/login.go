@@ -24,6 +24,7 @@ type loginResponse struct {
 	Email        string    `json:"email"`
 	Token        string    `json:"token"`
 	RefreshToken string    `json:"refresh_token"`
+	IsChirpyRed  bool      `json:"is_chirpy_red"`
 }
 
 func (cfg *ServerConfig) LoginHandler(r http.ResponseWriter, req *http.Request) {
@@ -84,6 +85,7 @@ func (cfg *ServerConfig) LoginHandler(r http.ResponseWriter, req *http.Request) 
 		Email:        u.Email,
 		Token:        token,
 		RefreshToken: refreshToken,
+		IsChirpyRed:  u.IsChirpyRed,
 	}
 
 	// format the response as json

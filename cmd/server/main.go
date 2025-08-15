@@ -35,6 +35,8 @@ func main() {
 
 	jwtSecret := os.Getenv("JWTSECRET")
 
+	polkaKey := os.Getenv("POLKA_KEY")
+
 	jwtCfg := auth.JWTConfig{
 		Issuer:        "chirpy",
 		Duration:      time.Hour,
@@ -47,6 +49,7 @@ func main() {
 		DBQueries:      dbQueries,
 		Platform:       platform,
 		JWTCfg:         &jwtCfg,
+		PolkaKey:       polkaKey,
 	}
 
 	fileServerHandler := http.FileServer((http.Dir(filePathRoot)))
@@ -59,16 +62,25 @@ func main() {
 	)
 
 	// util endpoints to check health etc
+	// get
 	serveMux.HandleFunc("GET /api/healthz", server.HealthzHandler)
 	serveMux.HandleFunc("GET /api/chirps", cfg.GetAllChirpsHandler)
 	serveMux.HandleFunc("GET /api/chirps/{chirpID}", cfg.GetChirpByIDHandler)
+	serveMux.HandleFunc("GET /admin/metrics", cfg.MetricsHandler)
+	// post
 	serveMux.HandleFunc("POST /api/users", cfg.CreateUserHandler)
 	serveMux.HandleFunc("POST /api/login", cfg.LoginHandler)
 	serveMux.HandleFunc("POST /api/refresh", cfg.RefreshHandler)
 	serveMux.HandleFunc("POST /api/revoke", cfg.RevokeHandler)
 	serveMux.HandleFunc("POST /api/chirps", cfg.CreateChirpHandler)
-	serveMux.HandleFunc("GET /admin/metrics", cfg.MetricsHandler)
 	serveMux.HandleFunc("POST /admin/reset", cfg.ResetHandler)
+	// put
+	serveMux.HandleFunc("PUT /api/users", cfg.EditUserHandler)
+	// delete
+	serveMux.HandleFunc("DELETE /api/chirps/{chirpID}", cfg.DeleteChirpHandler)
+
+	// webhooks
+	serveMux.HandleFunc("POST /api/polka/webhooks", cfg.PolkaSubscriptionHandler)
 
 	// server obejct to listen on port 8080
 	server := http.Server{

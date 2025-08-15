@@ -7,18 +7,22 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (id, created_at, updated_at, email, hashed_password)
+INSERT INTO users
+  (id, created_at, updated_at, email, hashed_password, is_chirpy_red)
 VALUES (
   gen_random_uuid(),
   NOW(),
   NOW(),
   $1,
-  $2
+  $2,
+  false
   )
-RETURNING id, created_at, updated_at, email, hashed_password
+RETURNING id, created_at, updated_at, email, hashed_password, is_chirpy_red
 `
 
 type CreateUserParams struct {
@@ -35,6 +39,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.UpdatedAt,
 		&i.Email,
 		&i.HashedPassword,
+		&i.IsChirpyRed,
 	)
 	return i, err
 }
@@ -48,8 +53,37 @@ func (q *Queries) DeletAllUsers(ctx context.Context) error {
 	return err
 }
 
+const editUser = `-- name: EditUser :one
+UPDATE users
+SET email = $2,
+hashed_password = $3,
+updated_at = NOW()
+WHERE id = $1
+RETURNING id, created_at, updated_at, email, hashed_password, is_chirpy_red
+`
+
+type EditUserParams struct {
+	ID             uuid.UUID
+	Email          string
+	HashedPassword string
+}
+
+func (q *Queries) EditUser(ctx context.Context, arg EditUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, editUser, arg.ID, arg.Email, arg.HashedPassword)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Email,
+		&i.HashedPassword,
+		&i.IsChirpyRed,
+	)
+	return i, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, created_at, updated_at, email, hashed_password FROM users
+SELECT id, created_at, updated_at, email, hashed_password, is_chirpy_red FROM users
 WHERE email = $1
 `
 
@@ -62,6 +96,19 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.UpdatedAt,
 		&i.Email,
 		&i.HashedPassword,
+		&i.IsChirpyRed,
 	)
 	return i, err
+}
+
+const subscribeUser = `-- name: SubscribeUser :exec
+UPDATE users
+SET is_chirpy_red = true,
+updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) SubscribeUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, subscribeUser, id)
+	return err
 }
