@@ -42,13 +42,13 @@ func (cfg *ServerConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Req
 	// authenticate
 	bearer, err := auth.GetBearerToken(req.Header)
 	if err != nil {
-		log.Printf("%v", err)
+		log.Printf("CHIRP GET BEARER - %v", err)
 		w.WriteHeader(401)
 		return
 	}
 	userID, err := auth.ValidateJWT(bearer, cfg.JWTCfg)
 	if err != nil {
-		log.Printf("%v", err)
+		log.Printf("CHIRP VALIDATE JWT - %v", err)
 		w.WriteHeader(401)
 		return
 	}
@@ -58,7 +58,7 @@ func (cfg *ServerConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Req
 	err = decoder.Decode(&rb)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if err != nil {
-		log.Printf("%v", err)
+		log.Printf("CHIRP - %v", err)
 		w.WriteHeader(500)
 		respBody := reqBody{Body: "Something went wrong"}
 		dat, _ := json.Marshal(respBody)
@@ -81,7 +81,7 @@ func (cfg *ServerConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Req
 		UserID: userID,
 	})
 	if err != nil {
-		log.Printf("failed to create chirp: %v", err)
+		log.Printf("CHIRP - %v", err)
 		w.WriteHeader(400)
 		return
 	}
@@ -89,14 +89,13 @@ func (cfg *ServerConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Req
 	dat, _ := json.Marshal(respBody)
 	w.WriteHeader(201)
 	w.Write(dat)
-	log.Printf("chirp created successfully: id = %v", c.ID)
 }
 
 func (cfg *ServerConfig) GetAllChirpsHandler(w http.ResponseWriter, req *http.Request) {
 	c, err := cfg.DBQueries.GetAllChirps(req.Context())
 	if err != nil {
 		w.WriteHeader(400)
-		log.Printf("error getting chirps from database: %v", err)
+		log.Printf("CHIRP - %v", err)
 		return
 	}
 	w.WriteHeader(200)
@@ -115,7 +114,7 @@ func (cfg *ServerConfig) GetAllChirpsHandler(w http.ResponseWriter, req *http.Re
 	resJSON, err := json.Marshal(res)
 	if err != nil {
 		w.WriteHeader(400)
-		log.Printf("error marshalling json response: %v", err)
+		log.Printf("CHIRP - %v", err)
 		return
 	}
 	w.Write(resJSON)
@@ -124,19 +123,20 @@ func (cfg *ServerConfig) GetAllChirpsHandler(w http.ResponseWriter, req *http.Re
 func (cfg *ServerConfig) GetChirpByIDHandler(w http.ResponseWriter, req *http.Request) {
 	id := req.PathValue("chirpID")
 	if id == "" {
-		log.Println("id passed in was empty")
+		log.Println("CHIRP - id passed in was empty")
 		return
 	}
 	log.Printf("should be a uuid -> %v\n", id)
 	idParsed, err := uuid.Parse(id)
 	if err != nil {
 		w.WriteHeader(400)
-		log.Printf("error parsing id from path: %v", err)
+		log.Printf("CHIRP - %v", err)
 		return
 	}
 	// try get chirp by id
 	c, err := cfg.DBQueries.GetChirpById(req.Context(), idParsed)
 	if err != nil {
+		log.Printf("CHIRP - %v", err)
 		w.WriteHeader(404)
 		return
 	}
@@ -149,7 +149,7 @@ func (cfg *ServerConfig) GetChirpByIDHandler(w http.ResponseWriter, req *http.Re
 	})
 	if err != nil {
 		w.WriteHeader(400)
-		log.Printf("error marshalling json chirp: %v", err)
+		log.Printf("CHIRP - %v", err)
 		return
 	}
 	w.WriteHeader(200)

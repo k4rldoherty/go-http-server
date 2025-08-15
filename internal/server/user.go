@@ -67,5 +67,4 @@ func (cfg *ServerConfig) CreateUserHandler(w http.ResponseWriter, req *http.Requ
 		return
 	}
 	w.Write(resJSON)
-	log.Println("user created successfully")
 }

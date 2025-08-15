@@ -15,7 +15,7 @@ func (cfg *ServerConfig) ResetHandler(w http.ResponseWriter, req *http.Request) 
 	// remove all users from db
 	err := cfg.DBQueries.DeletAllUsers(req.Context())
 	if err != nil {
-		log.Printf("error deleting users from database: %v", err)
+		log.Printf("RESET - %v", err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
