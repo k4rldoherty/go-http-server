@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"slices"
+	"sort"
 	"strings"
 	"time"
 
@@ -92,7 +93,25 @@ func (cfg *ServerConfig) CreateChirpHandler(w http.ResponseWriter, req *http.Req
 }
 
 func (cfg *ServerConfig) GetAllChirpsHandler(w http.ResponseWriter, req *http.Request) {
-	c, err := cfg.DBQueries.GetAllChirps(req.Context())
+	q := req.URL.Query().Get("author_id")
+	queryString := req.URL.Query().Get("sort")
+	sortType := "asc"
+	if queryString == "desc" {
+		sortType = "desc"
+	}
+	// nil by default
+	var authorID uuid.UUID
+	parsedAID, err := uuid.Parse(q)
+	// if parse was successful
+	if err == nil {
+		authorID = parsedAID
+	}
+	var c []database.Chirp
+	if authorID != uuid.Nil {
+		c, err = cfg.DBQueries.GetAllChirpsByAuthor(req.Context(), authorID)
+	} else {
+		c, err = cfg.DBQueries.GetAllChirps(req.Context())
+	}
 	if err != nil {
 		w.WriteHeader(400)
 		log.Printf("CHIRP - %v", err)
@@ -110,6 +129,11 @@ func (cfg *ServerConfig) GetAllChirpsHandler(w http.ResponseWriter, req *http.Re
 			UserID:    v.UserID,
 		}
 		res = append(res, parsedItem)
+	}
+	if sortType == "desc" {
+		sort.Slice(res, func(i, j int) bool {
+			return res[i].CreatedAt.After(res[j].CreatedAt)
+		})
 	}
 	resJSON, err := json.Marshal(res)
 	if err != nil {
